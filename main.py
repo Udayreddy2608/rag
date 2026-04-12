@@ -46,7 +46,8 @@ async def upload_file(file: UploadFile = File(...)):
         "version_id": response.version_id or "",
         "content_type": file.content_type or "application/octet-stream",
         "uploaded_at": datetime.now(timezone.utc).isoformat(),
-        "hash": file_hash
+        "hash": file_hash,
+        "status": "uploaded"
     }
     redis_key = file_hash
     redis_client.hset(redis_key, mapping=metadata)
