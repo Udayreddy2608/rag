@@ -3,16 +3,17 @@ from src.db.models.document_models import Document
 
 @celery_app.task(
     bind = True,
-    name = "tasks.transform.transform_document",
+    name = "transform_document",
     queue = "transform",
     max_retries = 3,
     default_retry_delay = 60
 )
-def transform_document(self, document: Document):
+def transform_document(self, data: dict): 
     try:
-        print(f"Starting transformation for document: {document.id}")
+        print(f"Starting transformation for: {data.get('object', 'unknown')}")
+        return data 
     except Exception as exc:
-        print(f"Error occurred while transforming document {document.id}: {exc}")
+        raise self.retry(exc=exc)
 
 
 if __name__ == "__main__":

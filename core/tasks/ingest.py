@@ -9,7 +9,8 @@ from src.db.models.document_models import DocumentMetadata
                  default_retry_delay = 60)
 def ingest_data(self, data: dict):
     try:
-        print(f"Starting ingestion for data: {data.get('file_name', 'unknown')}")
+        print(f"Starting ingestion for data: {data.get('object', 'unknown')}")
+        return data
     except Exception as exc:
         print(f"Error occurred while ingesting data: {exc}")
 

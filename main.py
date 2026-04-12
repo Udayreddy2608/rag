@@ -3,6 +3,7 @@ from fastapi import FastAPI, UploadFile, File, HTTPException
 from src.db.clients import get_redis_client, get_minio_client
 from src.config.config import load_minio_config
 from src.utils.hash_file import hash_upload_file
+from core.tasks.pipeline import run_pipeline
 
 app = FastAPI()
 
@@ -40,6 +41,7 @@ async def upload_file(file: UploadFile = File(...)):
 
     # Store metadata required to fetch the object from MinIO later.
     metadata = {
+        "id": file_hash,
         "bucket": response.bucket_name,
         "object": response.object_name,
         "etag": response.etag,
@@ -49,10 +51,12 @@ async def upload_file(file: UploadFile = File(...)):
         "hash": file_hash,
         "status": "uploaded"
     }
-    redis_key = file_hash
-    redis_client.hset(redis_key, mapping=metadata)
+    # redis_key = file_hash
+    # redis_client.hset(redis_key, mapping=metadata)
 
-    return {"message": f"File '{object_name}' uploaded successfully to bucket '{bucket_name}'."}
+    task_id = run_pipeline(metadata)
+
+    return {"message": f"File '{object_name}' uploaded successfully to bucket '{bucket_name}', task_id: {task_id}"}
 
 if __name__ == "__main__":
     import uvicorn

@@ -3,16 +3,17 @@ from src.config.celery_config import celery_app
 
 @celery_app.task(
     bind = True,
-    name = "tasks.store.store_document",
+    name = "store_document",
     queue = "store",
     max_retries = 3,
     default_retry_delay = 60
 )
-def store_document(self, document):
+def store_document(self, data: dict):
     try:
-        print(f"Starting storage for document: {document.get('id', 'unknown')}")
+        print(f"Storing document: {data.get('object', 'unknown')}")
+        return {"status": "stored", "object": data.get("object")}
     except Exception as exc:
-        print(f"Error occurred while storing document {document.get('id', 'unknown')}: {exc}")
+        raise self.retry(exc=exc)
 
 
 if __name__ == "__main__":
