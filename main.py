@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from src.db.clients import get_redis_client, get_minio_client
 from src.config.config import load_minio_config
+from src.utils.hash_file import hash_upload_file
 
 app = FastAPI()
 
@@ -21,6 +22,7 @@ async def upload_file(file: UploadFile = File(...)):
     if not file.filename:
         raise HTTPException(status_code=400, detail="Uploaded file must have a filename")
     object_name = file.filename
+    file_hash = await hash_upload_file(file)
 
     # Ensure the bucket exists
     if not minio_client.bucket_exists(bucket_name):
@@ -44,8 +46,9 @@ async def upload_file(file: UploadFile = File(...)):
         "version_id": response.version_id or "",
         "content_type": file.content_type or "application/octet-stream",
         "uploaded_at": datetime.now(timezone.utc).isoformat(),
+        "hash": file_hash
     }
-    redis_key = f"file:{response.object_name}"
+    redis_key = file_hash
     redis_client.hset(redis_key, mapping=metadata)
 
     return {"message": f"File '{object_name}' uploaded successfully to bucket '{bucket_name}'."}
