@@ -11,6 +11,7 @@ class MinioConfig(BaseSettings):
     minio_root_password: str = Field(..., description="MinIO root password")
     minio_host: str = Field(..., description="MinIO host address")
     minio_api_port: int = Field(..., description="MinIO API port")
+    minio_bucket_name: str = Field(..., description="MinIO bucket name")
 
     model_config = SettingsConfigDict(
         env_file=ENV_FILE, env_file_encoding="utf-8", extra="ignore"
@@ -58,6 +59,7 @@ if __name__ == "__main__":
     print(f"Root Password: {minio_config.minio_root_password}")
     print(f"Host: {minio_config.minio_host}")
     print(f"API Port: {minio_config.minio_api_port}")
+    print(f"Bucket Name: {minio_config.minio_bucket_name}")
 
     print("\nQdrant Configuration:")
     print(f"Host: {qdrant_config.qdrant_host}")
