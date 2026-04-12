@@ -5,3 +5,12 @@ redis_data/
 __pycache__/
 *.pyc
 *.pyo
+
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+
+*.py[cod]
+*$py.class
