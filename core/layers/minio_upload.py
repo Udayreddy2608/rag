@@ -59,6 +59,7 @@ def upload_to_minio(object_name: str, data):
         logger.error(f"Error occurred while uploading to MinIO: {exc}")
 
 
+
 if __name__ == "__main__":
     test_data = b"Hello, MinIO!"
     upload_to_minio("test-object.txt", test_data)

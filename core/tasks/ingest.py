@@ -1,29 +1,45 @@
+import logging
+import tempfile
+from pathlib import Path
+
 from src.config.celery_config import celery_app
-from src.config.config import load_minio_config, load_qdrant_config
-from src.db.clients import get_async_qdrant_client, get_minio_client, get_redis_client
-from src.db.models.document_models import DocumentMetadata
+from src.db.clients import get_minio_client
+from core.layers.extraction import extract
 
-@celery_app.task(name="ingest_data",
-                 bind = True,
-                 queue = "ingest",
-                 default_retry_delay = 60)
-def ingest_data(self, data: dict):
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
+@celery_app.task(
+    bind=True,
+    name="ingest_data",
+    queue="ingest",
+    max_retries=3,
+    default_retry_delay=60,
+)
+def ingest_data(self, metadata: dict) -> dict:
+    object_key = metadata["object"]
+    bucket = metadata["bucket"]
+    file_hash = metadata["hash"]
+    ext = Path(object_key).suffix.lower()
+    tmp_path = Path(tempfile.gettempdir()) / f"{file_hash}{ext}"
+
     try:
-        print(f"Starting ingestion for data: {data.get('object', 'unknown')}")
-        return data
-    except Exception as exc:
-        print(f"Error occurred while ingesting data: {exc}")
+        logger.info(f"Downloading {object_key} from bucket {bucket}")
+        minio_client = get_minio_client()
+        minio_client.fget_object(bucket, object_key, str(tmp_path))
+        logger.info(f"Downloaded to {tmp_path}")
 
+        extraction_result = extract(tmp_path)
+        logger.info(f"Extracted {extraction_result.metadata.get('char_count', '?')} chars")
 
-if __name__ == "__main__":
-    sample_data = {
-        "file_name": "example_document.pdf",
-        "content": "This is the content of the example document.",
-        "metadata": {
-            "source": "user_upload",
-            "minio_path": "documents/example_document.pdf",
-            "filehash": "abc123def456",
-            "uploaded_at": "2024-06-01T12:00:00Z"
+        return {
+            **metadata,
+            "tmp_path": str(tmp_path),
+            "extracted_text": extraction_result.text,        
+            "extracted_metadata": extraction_result.metadata,
         }
-    }
-    ingest_data(sample_data)
+
+    except Exception as exc:
+        logger.error(f"Ingest failed for {object_key}: {exc}")
+        raise self.retry(exc=exc)
