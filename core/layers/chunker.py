@@ -1,18 +1,26 @@
-from langchain_text_splitters import RecursiveCharacterTextSplitter
+from core.layers.chunkers import registry, Chunk
+from core.layers.extraction import ExtractionResult
+from core.layers.extraction import extract
 
 
-def chunk_text(text, chunk_size=512, chunk_overlap=50):
-    """
-    Chunk the input text into smaller pieces using RecursiveCharacterTextSplitter.
+def chunk(result: ExtractionResult, strategy: str = 'recursive') -> list[Chunk]:
+    chunker_cls = registry.get_chunker(strategy)
+    if not chunker_cls:
+        raise ValueError(f"Unsupported chunking strategy: {strategy}")
+    chunker = chunker_cls()
+    return chunker.chunk(result.text, result.metadata)
 
-    Args:
-        text (str): The input text to be chunked.
-        chunk_size (int): The maximum size of each chunk.
-        chunk_overlap (int): The number of characters to overlap between chunks.
 
-    Returns:
-        List[str]: A list of text chunks.
-    """
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
-    chunks = text_splitter.split_text(text)
-    return chunks
+
+if __name__ == "__main__":
+    from core.layers.extractors.registry import registry as extractor_registry
+    from pathlib import Path
+
+    file_path = Path("test_files/attention.pdf")
+    content = extract(file_path)
+    extraction_result = ExtractionResult(text=content.text, metadata=content.metadata)
+
+    chunks = chunk(extraction_result, strategy='recursive')
+    for i, c in enumerate(chunks):
+        print(f"Chunk {i}: {c.text}")
+        break

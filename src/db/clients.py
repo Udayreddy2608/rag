@@ -23,9 +23,9 @@ def get_redis_client(config: RedisConfig | None = None) -> Redis:
 
 def get_async_qdrant_client(config: QdrantConfig | None = None) -> AsyncQdrantClient:
     config = config or load_qdrant_config()
+    url = f"http://{config.qdrant_host}:{config.qdrant_api_port}"
     return AsyncQdrantClient(
-        host=config.qdrant_host,
-        port=config.qdrant_api_port,
+        url=url,
         api_key=config.qdrant_api_key,
     )
 
