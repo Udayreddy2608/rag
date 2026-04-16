@@ -4,7 +4,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field
 
 
-ENV_FILE = Path(__file__).resolve().parents[2] / ".env"
+_env_file = Path(__file__).resolve().parents[2] / ".env"
+ENV_FILE = _env_file if _env_file.exists() else None
 
 class MinioConfig(BaseSettings):
     minio_root_user: str = Field(..., description="MinIO root username")
@@ -14,8 +15,13 @@ class MinioConfig(BaseSettings):
     minio_bucket_name: str = Field(..., description="MinIO bucket name")
 
     model_config = SettingsConfigDict(
-        env_file=ENV_FILE, env_file_encoding="utf-8", extra="ignore"
-    )
+                    env_file=ENV_FILE,
+                    env_file_encoding="utf-8",
+                    extra="ignore",
+                    case_sensitive=False,
+                    populate_by_name=True,
+                    env_ignore_empty=True,
+                    )
 
 class QdrantConfig(BaseSettings):
     qdrant_host: str = Field(..., description="Qdrant host address")
@@ -27,16 +33,26 @@ class QdrantConfig(BaseSettings):
     qdrant_collection_name: str = Field(..., description="Qdrant collection name")
 
     model_config = SettingsConfigDict(
-        env_file=ENV_FILE, env_file_encoding="utf-8", extra="ignore"
-    )
+                    env_file=ENV_FILE,
+                    env_file_encoding="utf-8",
+                    extra="ignore",
+                    case_sensitive=False,
+                    populate_by_name=True,
+                    env_ignore_empty=True,
+                    )
 
 class RedisConfig(BaseSettings):
     redis_host: str = Field(..., description="Redis host address")
     redis_port: int = Field(..., description="Redis port")
     redis_password: str = Field(..., description="Redis password")
     model_config = SettingsConfigDict(
-        env_file=ENV_FILE, env_file_encoding="utf-8", extra="ignore"
-    )
+                    env_file=ENV_FILE,
+                    env_file_encoding="utf-8",
+                    extra="ignore",
+                    case_sensitive=False,
+                    populate_by_name=True,
+                    env_ignore_empty=True,
+                    )
 
 class EmbeddingConfig(BaseSettings):
     embedding_model_name: str = Field(..., description="Embedding model name")
@@ -44,8 +60,13 @@ class EmbeddingConfig(BaseSettings):
     embedding_batch_size: int = Field(100, description="Batch size for embedding requests")
 
     model_config = SettingsConfigDict(
-        env_file=ENV_FILE, env_file_encoding="utf-8", extra="ignore"
-    )
+                    env_file=ENV_FILE,
+                    env_file_encoding="utf-8",
+                    extra="ignore",
+                    case_sensitive=False,
+                    populate_by_name=True,
+                    env_ignore_empty=True,
+                    )
 
 
 def load_minio_config() -> MinioConfig:

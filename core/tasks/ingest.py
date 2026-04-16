@@ -1,6 +1,7 @@
 import logging
 import tempfile
 from pathlib import Path
+import io
 
 from src.config.celery_config import celery_app
 from src.db.clients import get_minio_client
@@ -33,10 +34,28 @@ def ingest_data(self, metadata: dict) -> dict:
         extraction_result = extract(tmp_path)
         logger.info(f"Extracted {extraction_result.metadata.get('char_count', '?')} chars")
 
+        # Upload extracted text to MinIO instead of returning it in the Celery result
+        minio_client = get_minio_client()
+        extracted_object_name = f"extracted/{file_hash}.txt"
+        text_bytes = extraction_result.text.encode("utf-8")
+        text_stream = io.BytesIO(text_bytes)
+        try:
+            minio_client.put_object(
+                bucket_name=bucket,
+                object_name=extracted_object_name,
+                data=text_stream,
+                length=len(text_bytes),
+                content_type="text/plain; charset=utf-8",
+            )
+            logger.info(f"Uploaded extracted text to MinIO: {extracted_object_name}")
+        except Exception as e:
+            logger.error(f"Failed to upload extracted text to MinIO: {e}")
+
+        # Return metadata and a pointer to the MinIO object; do NOT include the raw extracted text
         return {
             **metadata,
             "tmp_path": str(tmp_path),
-            "extracted_text": extraction_result.text,        
+            "extracted_minio_object": extracted_object_name,
             "extracted_metadata": extraction_result.metadata,
         }
 

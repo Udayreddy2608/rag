@@ -16,4 +16,5 @@ __pycache__/
 *$py.class
 
 .DS_Store
+k8s/secrets.yaml
 .env

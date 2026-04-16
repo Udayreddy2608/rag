@@ -1,6 +1,6 @@
 # Database Clients
 from redis import Redis
-from qdrant_client import AsyncQdrantClient
+from qdrant_client import AsyncQdrantClient, QdrantClient
 from minio import Minio
 from src.config.config import (
     MinioConfig,
@@ -38,6 +38,10 @@ def get_minio_client(config: MinioConfig | None = None) -> Minio:
         secure=False
     )
 
+def get_sync_qdrant_client(config: QdrantConfig | None = None) -> QdrantClient:
+    config = config or load_qdrant_config()
+    url = f"http://{config.qdrant_host}:{config.qdrant_api_port}"
+    return QdrantClient(url=url, api_key=config.qdrant_api_key)
 
 if __name__ == "__main__":
     redis_client = get_redis_client()
