@@ -14,3 +14,8 @@ __pycache__/
 
 *.py[cod]
 *$py.class
+
+.DS_Store
+k8s/secrets.yaml
+.env
+.env
