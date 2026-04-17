@@ -54,7 +54,10 @@ def _upload_sync(collection_name: str, embedded_chunks: list):
         ))
 
 
-    client.upsert(collection_name=collection_name, points=points)
+    batch_size = 100
+    for i in range(0, len(points), batch_size):
+        batch = points[i:i + batch_size]
+        client.upsert(collection_name=collection_name, points=batch)
 
 @celery_app.task(
     bind = True,
@@ -82,6 +85,7 @@ def store_document(self, data: dict):
                 embedding=ec["embedding"],
                 metadata={**ec["metadata"], "entities": ec.get("entities", {})},
             )
+ 
             for ec in embedded_chunks_raw
         ]
 
