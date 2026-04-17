@@ -21,7 +21,7 @@ services:
   celery-worker:
     build: .
     container_name: celery-worker
-    command: celery -A src.config.celery_config.celery_app worker --loglevel=info
+    command: celery -A src.config.celery_config.celery_app worker -Q ingest,transform,store --concurrency=50 -P gevent --loglevel=info
     env_file: .env
     volumes:
       - .:/app
