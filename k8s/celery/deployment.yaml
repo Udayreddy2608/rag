@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: celery-worker
+  namespace: rag
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: celery-worker
+  template:
+    metadata:
+      labels:
+        app: celery-worker
+    spec:
+      containers:
+        - name: celery-worker
+          image: ragregistryuday.azurecr.io/rag-api:latest
+          imagePullPolicy: Always
+          command:
+            - celery
+            - -A
+            - src.config.celery_config.celery_app
+            - worker
+            - -Q
+            - ingest,transform,store
+            - --concurrency=20
+            - -P
+            - gevent
+            - --loglevel=info
+          envFrom:
+            - secretRef:
+                name: rag-secrets
+            - configMapRef:
+                name: rag-config
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "200m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
